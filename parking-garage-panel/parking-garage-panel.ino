@@ -16,23 +16,22 @@ String msgStart      = "Park-Garage ACG";
 String msgNoVacancy  = "NAO HA VAGAS";
 String msgVacancy    = "Vagas disp: ";
 String msgCnxErro    = "System out";
-char msgQTTWill[]    = "Client #03 off";
+char msgQTTWill[]    = "Client Panel #03 off";
 
 const int mqttStatusOnLED = 9;
 const int mqttStatusOffLED = 8;
 
-char topicPub[]  = "Garage_Light";
-char topicSub[]  = "Garage_Light";
-char topicWill[] = "Garage_Bye";
+char topicSub[]  = "senai-code-xp/#vagas";
+char topicWill[] = "senai-code-xp/vagas/will";
 
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xA0, 0x03 };
 IPAddress ip (192, 162, 1, 3);
-char server[] = "m10.cloudmqtt.com";
-int port = 12598;
+char server[] = "test.mosquitto.org";
+int port = 1883;
 
-char clientMQTTID[] = "MQTT-Senai";
-char userMQTT[] = "IoT-A";
-char passMQTT[] = "S3n41-1o7";
+char clientMQTTID[] = "MQTT-senai-sp-kit03";
+char userMQTT[] = "user";
+char passMQTT[] = "pass";
 
 EthernetClient ethClient;
 PubSubClient client(server,port,callback,ethClient);
@@ -51,8 +50,9 @@ void setup()
 
 void loop()
 {
+  
   reconnectMQTT();
-
+  
   if(client.connected()) {
      client.loop();   
   }
@@ -142,9 +142,9 @@ void reconnectMQTT() {
       
        Serial.print("Conectando MQTT ...");
     
-       if (client.connect(clientMQTTID,userMQTT,passMQTT,topicWill,0,false,msgQTTWill)) {
+//       if (client.connect(clientMQTTID,userMQTT,passMQTT,topicWill,0,false,msgQTTWill)) {
+       if (client.connect(clientMQTTID,topicWill,0,false,msgQTTWill)) {
           Serial.println("conectado");    
-          client.publish(topicPub,messageMQTT);
           if (!client.subscribe(topicSub)) {
               Serial.println("Erro na subscrição");
           } else {
