@@ -6,14 +6,14 @@
 LiquidCrystal lcd(7, 6, 5, 4, 3, 2);
 
 //=======================================================================
-void callback(const char topic, byte* payload, unsigned int length);
+void callback(char* topic, byte* payload, unsigned int length);
 //=======================================================================
 
 int lcdPin = A0;
 int lcdPinBg = A1;
 
 String msgStart      = "Park-Garage ACG";
-String msgNoVacancy  = "NAO HA VAGAS";
+String msgNoVacancy  = "NAO HA VAGAS     ";
 String msgVacancy    = "Vagas disp: ";
 String msgCnxErro    = "System out";
 char msgQTTWill[]    = "Client Panel #03 off";
@@ -21,17 +21,32 @@ char msgQTTWill[]    = "Client Panel #03 off";
 const int mqttStatusOnLED = 9;
 const int mqttStatusOffLED = 8;
 
-char topicSub[]  = "senai-code-xp/#vagas";
+char topicSub[]  = "senai-code-xp/vagas/+";
 char topicWill[] = "senai-code-xp/vagas/will";
+
+//char topicSub[]  = "#";
+//char topicWill[] = "Garage_Light";
+
+int nVagas = 18;
+
+int *lstVacancy;
+
+int timeMsg;
+int timeWithoutMsg;
 
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xA0, 0x03 };
 IPAddress ip (192, 162, 1, 3);
 char server[] = "test.mosquitto.org";
 int port = 1883;
+//char server[] = "m10.cloudmqtt.com";
+//int port = 12598;
 
 char clientMQTTID[] = "MQTT-senai-sp-kit03";
-char userMQTT[] = "user";
-char passMQTT[] = "pass";
+
+//char userMQTT[] = "user";
+//char passMQTT[] = "pass";
+//char userMQTT[] = "IoT-A";
+//char passMQTT[] = "S3n41-1o7";
 
 EthernetClient ethClient;
 PubSubClient client(server,port,callback,ethClient);
@@ -41,6 +56,7 @@ void setup()
   serialSetup();
   lcdSetup();
   ethernetSetup();
+  setupVacancy();
 
   //LEDs vaga disponível e MQTT status
   pinMode(mqttStatusOnLED, OUTPUT);
@@ -56,6 +72,9 @@ void loop()
   if(client.connected()) {
      client.loop();   
   }
+
+  timeWithoutMsg = (millis() - timeMsg);
+  
    
   int qtdVacancy = getVacancy();
 
@@ -66,6 +85,14 @@ void loop()
   }
   
   showMqttStatusLED(client.connected());
+
+  if (timeWithoutMsg > 10000) {
+     lcd.noDisplay();
+     analogWrite(lcdPinBg, 0);
+  } else {
+     lcd.display();
+     analogWrite(lcdPinBg, 1023);    
+  }
  
 }
 
@@ -79,6 +106,7 @@ void serialSetup() {
 void lcdSetup() {
    lcd.begin(16, 2);
    analogWrite(lcdPin, 0);
+   analogWrite(lcdPinBg, 1023);
    lcd.setCursor(0, 0);
    lcd.print(msgStart);
 }
@@ -115,7 +143,16 @@ void showVacancy(int vagas) {
 }
 
 int getVacancy() {
-  return 0;
+
+  int yesVacancy = 0;
+  
+  for ( int i = 0; i < nVagas; i++ ) {
+      if (lstVacancy[ i ] == 1) {
+        yesVacancy ++;
+      }
+  }
+  
+  return yesVacancy;
 }
 
 void lcdBlink(int interval) {
@@ -142,9 +179,10 @@ void reconnectMQTT() {
       
        Serial.print("Conectando MQTT ...");
     
-//       if (client.connect(clientMQTTID,userMQTT,passMQTT,topicWill,0,false,msgQTTWill)) {
+///       if (client.connect(clientMQTTID,userMQTT,passMQTT,topicWill,0,false,msgQTTWill)) {
        if (client.connect(clientMQTTID,topicWill,0,false,msgQTTWill)) {
           Serial.println("conectado");    
+        
           if (!client.subscribe(topicSub)) {
               Serial.println("Erro na subscrição");
           } else {
@@ -159,31 +197,39 @@ void reconnectMQTT() {
 
 }
 
-void callback(const char topic, byte* payload, unsigned int length) {
+void callback(char* topic, byte* payload, unsigned int length) {
   
-  // handle message arrived
-  Serial.print("Callback: ");
-  Serial.println(String(topic));
-
   char* payloadAsChar = payload;
+  char* topicAsChar = topic;
 
   // Workaround para pequeno bug na biblioteca
   payloadAsChar[length] = 0;
 
   // Converter em tipo String para conveniência
-  String topicStr = String(topic);
+  String topicStr = String(topicAsChar);
   String msg = String(payloadAsChar);
-  Serial.print("Topic received: "); Serial.println(String(topic));
-  Serial.print("Message: "); Serial.println(msg);
+  String topicNumber = String(topicAsChar[20])+String(topicAsChar[21]);
 
-  // Dentro do callback da biblioteca MQTT,
-  // devemos usar Serial.flush() para garantir que as mensagens serão enviadas
+  timeMsg = millis();  
+  
+  Serial.print("Topic received: "); Serial.print(topicStr); Serial.print(" - "); Serial.println(topicNumber); 
+  Serial.print("Message: "); Serial.println(msg); 
+  
+  
   Serial.flush();
 
-  // https://www.arduino.cc/en/Reference/StringToInt
-  int msgComoNumero = msg.toInt();
-
-  Serial.print("Numero recebido: "); Serial.println(msgComoNumero);
+  lstVacancy[(topicNumber.toInt()-1)] = msg.toInt();
+  
   Serial.flush();
 
 }
+
+void setupVacancy() {
+  
+  lstVacancy = (int *) malloc(nVagas * sizeof(int)); ;
+
+  for ( int i = 0; i < nVagas; i++ ) {
+      lstVacancy[ i ] = 1;
+   }
+}
+
