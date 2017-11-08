@@ -1,6 +1,6 @@
 #include <Ultrasonic.h>
 
-Ultrasonic ultrasonic(12, 13);
+Ultrasonic ultrasonic(8, 9);
 
 boolean previousStatusVacancy;
 boolean currentStatusVacancy;
