@@ -1,6 +1,6 @@
 #include <Ultrasonic.h>
 
-Ultrasonic ultrasonic(12, 13);
+Ultrasonic ultrasonic(8, 9);
 
 boolean previousStatusVacancy;
 boolean currentStatusVacancy;
@@ -53,7 +53,7 @@ void verifyStatusVacancy() {
 
   int distancia = ultrasonic.distanceRead();
 
-  if (distancia > 50) {
+  if (distancia > 30) {
     currentStatusVacancy = true;
   } else {
     currentStatusVacancy = false;
