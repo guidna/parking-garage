@@ -25,9 +25,6 @@ const int mqttStatusOffLED = 8;
 char topicSub[]  = "senai-code-xp/vagas/+";
 char topicWill[] = "senai-code-xp/vagas/will";
 
-//char topicSub[]  = "#";
-//char topicWill[] = "Garage_Light";
-
 int nVagas = 0;
 int nNewVagas = 0;
 
@@ -41,15 +38,8 @@ byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xA0, 0xA3 };
 IPAddress ip (192, 162, 1, 3);
 char server[] = "test.mosquitto.org";
 int port = 1883;
-//char server[] = "m10.cloudmqtt.com";
-//int port = 12598;
 
 char clientMQTTID[] = "MQTT-senai-sp-kit03";
-
-//char userMQTT[] = "user";
-//char passMQTT[] = "pass";
-//char userMQTT[] = "IoT-A";
-//char passMQTT[] = "S3n41-1o7";
 
 EthernetClient ethClient;
 PubSubClient client(server,port,callback,ethClient);
