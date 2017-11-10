@@ -12,11 +12,12 @@ void callback(char* topic, byte* payload, unsigned int length);
 int lcdPin = A0;
 int lcdPinBg = A1;
 
-String msgStart      = "Park-Garage ACG";
-String msgNoVacancy  = "NAO HA VAGAS     ";
-String msgVacancy    = "Vagas disp: ";
-String msgCnxErro    = "System out";
-char msgQTTWill[]    = "Client Panel #03 off";
+String msgStart        = "Park-Garage ACG";
+String msgTotalVacancy = "TOTAL VAGAS.: ";
+String msgNoVacancy    = "NAO HA VAGAS     ";
+String msgVacancy      = "VAGAS LIVRES: ";
+String msgCnxErro      = "System out";
+char msgQTTWill[]      = "Client Panel #03 off";
 
 const int mqttStatusOnLED = 9;
 const int mqttStatusOffLED = 8;
@@ -27,14 +28,16 @@ char topicWill[] = "senai-code-xp/vagas/will";
 //char topicSub[]  = "#";
 //char topicWill[] = "Garage_Light";
 
-int nVagas = 18;
+int nVagas = 0;
+int nNewVagas = 0;
 
 int *lstVacancy;
+
 
 int timeMsg;
 int timeWithoutMsg;
 
-byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xA0, 0x03 };
+byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xA0, 0xA3 };
 IPAddress ip (192, 162, 1, 3);
 char server[] = "test.mosquitto.org";
 int port = 1883;
@@ -132,20 +135,28 @@ void showVacancy(int vagas) {
     msg = msgCnxErro;
   }
 
-  lcd.setCursor(0,1);
+  lcd.clear();
+  
+  lcd.setCursor(0, 0);
+  lcd.print(msgTotalVacancy);
+  lcd.setCursor(13, 0);
+  lcd.print(nVagas);   
+
+  lcd.setCursor(0, 1);
   lcd.print(msg);
 
   if(vagas > 0) {
     lcd.setCursor(13, 1);
     lcd.print(vagas);   
   }
+
   delay(1000);
 }
 
 int getVacancy() {
 
   int yesVacancy = 0;
-  
+
   for ( int i = 0; i < nVagas; i++ ) {
       if (lstVacancy[ i ] == 1) {
         yesVacancy ++;
@@ -179,7 +190,6 @@ void reconnectMQTT() {
       
        Serial.print("Conectando MQTT ...");
     
-///       if (client.connect(clientMQTTID,userMQTT,passMQTT,topicWill,0,false,msgQTTWill)) {
        if (client.connect(clientMQTTID,topicWill,0,false,msgQTTWill)) {
           Serial.println("conectado");    
         
@@ -198,6 +208,9 @@ void reconnectMQTT() {
 }
 
 void callback(char* topic, byte* payload, unsigned int length) {
+
+  int posicaoInicial;
+  int posicaoFinal;
   
   char* payloadAsChar = payload;
   char* topicAsChar = topic;
@@ -208,15 +221,26 @@ void callback(char* topic, byte* payload, unsigned int length) {
   // Converter em tipo String para conveniência
   String topicStr = String(topicAsChar);
   String msg = String(payloadAsChar);
-  String topicNumber = String(topicAsChar[20])+String(topicAsChar[21]);
+  String topicNumber; // = String(topicAsChar[20])+String(topicAsChar[21]);
+
+  posicaoInicial = strlen(topicSub)-1;
+  posicaoFinal   = strlen(topicAsChar)-1;
+
+  for (int i = posicaoInicial; i <= posicaoFinal; i++) {
+    topicNumber = topicNumber + String(topicAsChar[i]);
+  }
 
   timeMsg = millis();  
   
   Serial.print("Topic received: "); Serial.print(topicStr); Serial.print(" - "); Serial.println(topicNumber); 
   Serial.print("Message: "); Serial.println(msg); 
   
-  
   Serial.flush();
+
+  if(nVagas < topicNumber.toInt()) {
+    nNewVagas = topicNumber.toInt();
+    setupVacancy();
+  }
 
   lstVacancy[(topicNumber.toInt()-1)] = msg.toInt();
   
@@ -225,11 +249,24 @@ void callback(char* topic, byte* payload, unsigned int length) {
 }
 
 void setupVacancy() {
-  
-  lstVacancy = (int *) malloc(nVagas * sizeof(int)); ;
+
+  int *lstNewVacancy  = (int *) malloc(nNewVagas * sizeof(int));  
+
+  for ( int i = 0; i < nNewVagas; i++ ) {
+      lstNewVacancy[ i ] = 1;
+  }
 
   for ( int i = 0; i < nVagas; i++ ) {
-      lstVacancy[ i ] = 1;
+      lstNewVacancy[ i ] = lstVacancy[i];
+  }
+
+  nVagas = nNewVagas;
+
+  lstVacancy = (int *) malloc(nVagas * sizeof(int)); 
+
+  for ( int i = 0; i < nVagas; i++ ) {
+      lstVacancy[ i ] = lstNewVacancy[ i ];
    }
+
 }
 
