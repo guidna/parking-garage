@@ -22,8 +22,8 @@ char msgQTTWill[]      = "Client Panel #03 off";
 const int mqttStatusOnLED = 9;
 const int mqttStatusOffLED = 8;
 
-char topicSub[]  = "senai-code-xp/vagas/+";
-char topicWill[] = "senai-code-xp/vagas/will";
+char topicSub[]  = "vagas/+";
+char topicWill[] = "vagas/will";
 
 int nVagas = 0;
 int nNewVagas = 0;
@@ -36,7 +36,9 @@ int timeWithoutMsg;
 
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xA0, 0xA3 };
 IPAddress ip (192, 162, 1, 3);
-char server[] = "test.mosquitto.org";
+
+IPAddress server (192, 168, 3, 186);
+//char server[] = "test.mosquitto.org";
 int port = 1883;
 
 char clientMQTTID[] = "MQTT-senai-sp-kit03";
@@ -251,12 +253,15 @@ void setupVacancy() {
   }
 
   nVagas = nNewVagas;
+  free(lstVacancy);
 
   lstVacancy = (int *) malloc(nVagas * sizeof(int)); 
 
   for ( int i = 0; i < nVagas; i++ ) {
       lstVacancy[ i ] = lstNewVacancy[ i ];
    }
+
+   free(lstNewVacancy);
 
 }
 
