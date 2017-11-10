@@ -1,26 +1,31 @@
 #include <UIPEthernet.h>
 #include <utility/logging.h>
-
 #include <PubSubClient.h>
-
 #include <SPI.h>
+#include <Ultrasonic.h>
+
+/******************************************
+                   MQTT
+*******************************************/
 
 char msgQTTWill[]    = "Client Panel #02 off";
 
-char topicPub[]  = "senai-code-xp/vagas/02";
-char topicWill[] = "senai-code-xp/vagas/02";
+char topicPub[]  = "vagas/02";
+char topicWill[] = "vagas/02";
 
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xA0, 0x02 };
-IPAddress ip (192, 162, 1, 2);
-char server[] = "test.mosquitto.org";
+IPAddress ip(192,168,3,186);
 int port = 1883;
 
 char clientMQTTID[] = "MQTT-senai-sp-kit02";
 
 EthernetClient ethClient;
-PubSubClient client(server, port, ethClient);
+PubSubClient client(ip,port, ethClient);
 
-#include <Ultrasonic.h>
+
+/******************************************
+              Ultrassom
+*******************************************/
 
 Ultrasonic ultrasonic(8, 9);
 
@@ -39,7 +44,7 @@ void setup() {
   //client.setClient(ethClient);
   
   ethernetSetup();
-
+  
   setupLEDS ();
 }
 
@@ -70,6 +75,8 @@ void printStatusVacancy() {
     if (client.connected()) {
       client.publish(topicPub, "1");
     }
+    Serial.println("MQTT - Conectado");
+    Serial.println(currentStatusVacancy);
   } else {
     statusVacancy = "ocupada";
     digitalWrite(vacancyStatusLED, LOW);
@@ -77,6 +84,9 @@ void printStatusVacancy() {
     if (client.connected()) {
       client.publish(topicPub, "0");
     }
+    Serial.println("MQTT - Não conectado");
+    Serial.println(!currentStatusVacancy);
+    
   }
   Serial.print("Vaga: ");
   Serial.println(statusVacancy);
@@ -99,6 +109,7 @@ void showMqttStatusLED (boolean mqttStatus) {
 
   digitalWrite(mqttStatusOnLED, mqttStatus);
   digitalWrite(mqttStatusOffLED, !mqttStatus);
+  Serial.println(mqttStatus);
 
 }
 
