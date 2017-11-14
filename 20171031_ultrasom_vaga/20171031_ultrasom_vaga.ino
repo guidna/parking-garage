@@ -55,8 +55,10 @@ void verifyStatusVacancy() {
 
   if (distancia > 30) {
     currentStatusVacancy = true;
+    Serial.println("currentStatusVacancy = TRUE");
   } else {
     currentStatusVacancy = false;
+    Serial.println("currentStatusVacancy = FALSE");
   }
   
 }

@@ -14,7 +14,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
 //char msgQTTWill[]    = "Client Panel #02 off";
 
-char topicPub[]  = "vagas/02";
+String topicPub  = "vagas/81";
 //char topicWill[] = "vagas/will";
 //char topicSub[]  = "senai-vagas/02";
 //char topicWill[] = "senai-vagas/will";
@@ -68,10 +68,6 @@ void loop() {
      printStatusVacancy();
      previousStatusVacancy = currentStatusVacancy;
   }
-
-  if (client.connected()) {
-    client.loop();
-  }
   
 }
 
@@ -84,34 +80,39 @@ void printStatusVacancy() {
     
      statusVacancy = "livre";
      digitalWrite(vacancyStatusLED, HIGH);
-     statusVagas = "1";
-     client.publish(topicPub,"1",true);
+     statusVagas = '1';
 
   } else {
     
      statusVacancy = "ocupada";
      digitalWrite(vacancyStatusLED, LOW);
-     statusVagas = "0";
-     client.publish(topicPub,"0",true);
+     statusVagas = '0';
      
   }
   
   Serial.print("Vaga: ");
   Serial.println(statusVacancy);
 
+  if(client.connected()) {
+     if(client.publish("vagas/02","1")) {
+        Serial.println("Publicado com sucesso");
+     } else {
+        Serial.println("Erro na publicacao");
+     }
+  }
+
 }
 
 void verifyStatusVacancy() {
-
+/*
   int distancia = ultrasonic.distanceRead();
 
   if (distancia > 30) {
     currentStatusVacancy = true;
-    Serial.println("currentStatusVacancy = TRUE");
   } else {
     currentStatusVacancy = false;
-    Serial.println("currentStatusVacancy = FALSE");
   }
+*/
 
 }
 
@@ -159,6 +160,8 @@ void reconnectMQTT() {
     
        if (client.connect(clientMQTTID)) {
           Serial.println("conectado"); 
+          client.publish("vagas/02","1");   
+          Serial.println("publicado vagas 02 = 1");
        } else {
           Serial.print("falha, rc=");
           Serial.print(client.state());
