@@ -27,7 +27,7 @@ char msgQTTWill[]      = "Client Panel #03 off";
 
 const int mqttStatusOnLED = 9;
 const int mqttStatusOffLED = 8;
-const int mqttStatusCnxLED = 10;
+const int mqttStatusCnxLED = A2;
 
 char topicSub[]  = "vagas/+";
 char topicWill[] = "vagas/will";
