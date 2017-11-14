@@ -5,6 +5,12 @@
 
 LiquidCrystal lcd(7, 6, 5, 4, 3, 2);
 
+unsigned long previousMillis = 0;
+unsigned long blinkInterval = 100;
+const int blinkMaxCount = 5;
+int blinkCounter = 0;
+bool allowLEDBlink = false;
+
 //=======================================================================
 void callback(char* topic, byte* payload, unsigned int length);
 //=======================================================================
@@ -21,9 +27,13 @@ char msgQTTWill[]      = "Client Panel #03 off";
 
 const int mqttStatusOnLED = 9;
 const int mqttStatusOffLED = 8;
+const int mqttStatusCnxLED = 10;
 
 char topicSub[]  = "vagas/+";
 char topicWill[] = "vagas/will";
+
+//char topicSub[]  = "senai-vagas/+";
+//char topicWill[] = "senai-vagas/will";
 
 int nVagas = 0;
 int nNewVagas = 0;
@@ -56,6 +66,7 @@ void setup()
   //LEDs vaga disponível e MQTT status
   pinMode(mqttStatusOnLED, OUTPUT);
   pinMode(mqttStatusOffLED, OUTPUT);
+  pinMode(mqttStatusCnxLED, OUTPUT);
   
 }
 
@@ -65,7 +76,13 @@ void loop()
   reconnectMQTT();
   
   if(client.connected()) {
-     client.loop();   
+     client.loop();
+     
+     if (allowLEDBlink) {
+        // Isso aqui faz com que o proprio metodo volte a variavel para false quando terminar sua tarefa
+        allowLEDBlink = blinkLED();
+     }
+     
   }
 
   timeWithoutMsg = (millis() - timeMsg);
@@ -171,6 +188,7 @@ void showMqttStatusLED (boolean mqttStatus){
 
   digitalWrite(mqttStatusOnLED, mqttStatus);
   digitalWrite(mqttStatusOffLED, !mqttStatus);
+  digitalWrite(mqttStatusCnxLED, mqttStatus);
   
 }
 
@@ -183,8 +201,8 @@ void reconnectMQTT() {
        Serial.print("Conectando MQTT ...");
     
        if (client.connect(clientMQTTID,topicWill,0,false,msgQTTWill)) {
-          Serial.println("conectado");    
-        
+          Serial.println("conectado");
+      
           if (!client.subscribe(topicSub)) {
               Serial.println("Erro na subscrição");
           } else {
@@ -238,6 +256,8 @@ void callback(char* topic, byte* payload, unsigned int length) {
   
   Serial.flush();
 
+  allowLEDBlink = true;
+
 }
 
 void setupVacancy() {
@@ -265,3 +285,25 @@ void setupVacancy() {
 
 }
 
+bool blinkLED() {
+  unsigned long currentMillis = millis();
+  
+  if (currentMillis - previousMillis > blinkInterval) {
+    
+    if (blinkMaxCount >= blinkCounter) {
+      previousMillis = currentMillis;
+      swapPhase();
+      blinkCounter++;
+      return true;
+    } else {
+      blinkCounter = 0;
+      return false;
+    }
+    
+  }
+  
+}
+
+void swapPhase() {
+  digitalWrite(mqttStatusCnxLED, !digitalRead(mqttStatusCnxLED));
+}
