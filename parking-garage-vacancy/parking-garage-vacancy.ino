@@ -12,19 +12,13 @@ void callback(char* topic, byte* payload, unsigned int length) {
   Serial.println("callback");
 }
 
-//char msgQTTWill[]    = "Client Panel #02 off";
-
 char topicPub[]  = "vagas/02";
-//char topicWill[] = "vagas/will";
-//char topicSub[]  = "senai-vagas/02";
-//char topicWill[] = "senai-vagas/will";
-
 
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xA0, 0xA2 };
 IPAddress ip (192, 162, 1, 2);
 
 IPAddress server (192, 168, 3, 186);
-//char server[] = "test.mosquitto.org";
+
 int port = 1883;
 
 char clientMQTTID[] = "MQTT-senai-sp-kit02";
@@ -77,21 +71,16 @@ void loop() {
 
 void printStatusVacancy() {
 
-  char statusVagas;
-  boolean retPublish;
-  
   if (currentStatusVacancy) {
     
-     statusVacancy = "livre";
+     statusVacancy = "1"; /*Livre*/
      digitalWrite(vacancyStatusLED, HIGH);
-     statusVagas = "1";
      client.publish(topicPub,"1",true);
 
   } else {
     
-     statusVacancy = "ocupada";
+     statusVacancy = "0"; /*Livre*/
      digitalWrite(vacancyStatusLED, LOW);
-     statusVagas = "0";
      client.publish(topicPub,"0",true);
      
   }
